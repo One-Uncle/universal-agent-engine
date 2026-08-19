@@ -220,7 +220,6 @@ function Resolve-EngineSource([string]$Ref) {
         return $PSScriptRoot
     }
 
-    $url = "https://github.com/$RepoSlug/archive/refs/heads/$Ref.zip"
     Write-Log "Engine source: downloading ref '$Ref' from GitHub..."
 
     $temp = Join-Path ([System.IO.Path]::GetTempPath()) "uae-install-$([System.IO.Path]::GetRandomFileName())"
@@ -235,14 +234,41 @@ function Resolve-EngineSource([string]$Ref) {
         # Older .NET without Tls12 in the enum - nothing to do but try anyway.
     }
 
+    # The engine repo is private, so the primary path is the authenticated
+    # GitHub API zipball endpoint, using the token of an installed, logged-in
+    # GitHub CLI (gh). The anonymous public archive URL remains as a fallback
+    # in case the repo is ever made public.
+    $token = $null
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        try { $token = (& gh auth token 2>$null) } catch { $token = $null }
+        if ($token) { $token = ([string]$token).Trim() }
+    }
+
     $zip = Join-Path $temp 'engine.zip'
     $previousProgress = $ProgressPreference
     $ProgressPreference = 'SilentlyContinue'
+    $downloaded = $false
     try {
-        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
-    }
-    catch {
-        throw "Download failed for $url : $($_.Exception.Message)"
+        if ($token) {
+            $apiUrl = "https://api.github.com/repos/$RepoSlug/zipball/$Ref"
+            try {
+                Invoke-WebRequest -Uri $apiUrl -OutFile $zip -UseBasicParsing -Headers @{ Authorization = "Bearer $token" }
+                $downloaded = $true
+            }
+            catch {
+                Write-Log "Authenticated download failed ($($_.Exception.Message)) - trying the public archive URL..."
+            }
+        }
+        if (-not $downloaded) {
+            $publicUrl = "https://github.com/$RepoSlug/archive/refs/heads/$Ref.zip"
+            try {
+                Invoke-WebRequest -Uri $publicUrl -OutFile $zip -UseBasicParsing
+                $downloaded = $true
+            }
+            catch {
+                throw "Download failed for ref '$Ref'. The engine repo is private: install the GitHub CLI and run 'gh auth login' with an account that can read $RepoSlug, or clone the repo and run install.ps1 from the clone."
+            }
+        }
     }
     finally {
         $ProgressPreference = $previousProgress
@@ -250,10 +276,14 @@ function Resolve-EngineSource([string]$Ref) {
 
     Expand-Archive -Path $zip -DestinationPath $temp -Force
 
+    # GitHub names the extracted directory after the ref (public archive URL)
+    # or owner-repo-shortsha (API zipball), so match both shapes and probe for
+    # the engine's marker file.
     $extracted = Get-ChildItem -LiteralPath $temp -Directory |
-        Where-Object { $_.Name -like 'universal-agent-engine-*' } |
+        Where-Object { $_.Name -like '*universal-agent-engine-*' } |
+        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName $marker1) -PathType Leaf } |
         Select-Object -First 1
-    if (-not $extracted) { throw "Downloaded archive did not contain a universal-agent-engine-* directory." }
+    if (-not $extracted) { throw "Downloaded archive did not contain the engine (no *universal-agent-engine-* directory with .claude/UAE.md) - wrong ref?" }
 
     return $extracted.FullName
 }

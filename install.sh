@@ -13,7 +13,9 @@
 #     sh install.sh /path/to/your/project
 #
 #   Straight from the web (no clone needed):
-#     curl -fsSL https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.sh | sh
+#     gh api repos/One-Uncle/universal-agent-engine/contents/install.sh -H "Accept: application/vnd.github.raw" | sh
+#   (private repo — needs a logged-in GitHub CLI; a public repo would also allow
+#     curl -fsSL https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.sh | sh)
 #
 # Usage:
 #   install.sh [target-dir] [--force] [--dry-run] [--ref <branch-or-tag>]
@@ -165,6 +167,10 @@ resolve_local_source() {
 }
 
 # Remote mode: download and unpack the repo tarball for the requested ref.
+# The engine repo is private, so the primary path is the authenticated GitHub
+# API tarball endpoint, using the token of an installed, logged-in GitHub CLI
+# (gh). The anonymous public archive URLs remain as a fallback in case the
+# repo is ever made public.
 resolve_remote_source() {
   command -v curl >/dev/null 2>&1 || fail "remote install needs curl. Install curl, or clone the engine repo and run install.sh from it."
   command -v tar >/dev/null 2>&1 || fail "remote install needs tar. Install tar, or clone the engine repo and run install.sh from it."
@@ -172,28 +178,46 @@ resolve_remote_source() {
   make_tmp_dir
 
   rrs_tarball="$TMP_DIR/engine.tar.gz"
+  rrs_api_url="https://api.github.com/repos/${ENGINE_REPO}/tarball/${REF}"
   rrs_branch_url="https://github.com/${ENGINE_REPO}/archive/refs/heads/${REF}.tar.gz"
   rrs_tag_url="https://github.com/${ENGINE_REPO}/archive/refs/tags/${REF}.tar.gz"
 
-  log "Downloading engine (ref: ${REF}) from github.com/${ENGINE_REPO}..."
-  if ! curl -fsSL -o "$rrs_tarball" "$rrs_branch_url" 2>/dev/null; then
-    # The ref may be a tag rather than a branch.
-    curl -fsSL -o "$rrs_tarball" "$rrs_tag_url" 2>/dev/null \
-      || fail "download failed for ref '${REF}'. Check the branch or tag name and your network. Tried ${rrs_branch_url} and ${rrs_tag_url}."
+  rrs_token=""
+  if command -v gh >/dev/null 2>&1; then
+    rrs_token="$(gh auth token 2>/dev/null || true)"
   fi
+
+  log "Downloading engine (ref: ${REF}) from github.com/${ENGINE_REPO}..."
+  rrs_ok=0
+  if [ -n "$rrs_token" ]; then
+    # Authenticated API endpoint — works for the private repo, and resolves
+    # branches and tags alike.
+    curl -fsSL -H "Authorization: Bearer ${rrs_token}" -o "$rrs_tarball" "$rrs_api_url" 2>/dev/null && rrs_ok=1
+  fi
+  if [ "$rrs_ok" = 0 ]; then
+    # Anonymous fallback; only works if the repo is public. The ref may be a
+    # branch or a tag, so try both archive URLs.
+    if curl -fsSL -o "$rrs_tarball" "$rrs_branch_url" 2>/dev/null; then
+      rrs_ok=1
+    elif curl -fsSL -o "$rrs_tarball" "$rrs_tag_url" 2>/dev/null; then
+      rrs_ok=1
+    fi
+  fi
+  [ "$rrs_ok" = 1 ] || fail "download failed for ref '${REF}'. The engine repo is private: install the GitHub CLI and run 'gh auth login' with an account that can read ${ENGINE_REPO}, or clone the repo and run install.sh from the clone."
 
   tar -xzf "$rrs_tarball" -C "$TMP_DIR" || fail "could not unpack the downloaded engine archive"
 
-  # GitHub names the extracted directory after the ref, so glob for it.
-  for rrs_candidate in "$TMP_DIR"/${ENGINE_DIR_PREFIX}-*; do
-    if [ -d "$rrs_candidate" ]; then
+  # GitHub names the extracted directory after the ref (public archive URL) or
+  # owner-repo-shortsha (API tarball), so glob for both shapes and probe each
+  # candidate for the engine's marker file.
+  for rrs_candidate in "$TMP_DIR"/*${ENGINE_DIR_PREFIX}-*; do
+    if [ -d "$rrs_candidate" ] && [ -f "$rrs_candidate/.claude/UAE.md" ]; then
       SOURCE_DIR="$rrs_candidate"
       break
     fi
   done
 
-  [ -n "$SOURCE_DIR" ] || fail "unpacked archive did not contain a ${ENGINE_DIR_PREFIX}-* directory"
-  [ -f "$SOURCE_DIR/.claude/UAE.md" ] || fail "downloaded archive is missing .claude/UAE.md — wrong ref?"
+  [ -n "$SOURCE_DIR" ] || fail "unpacked archive did not contain the engine (no *${ENGINE_DIR_PREFIX}-* directory with .claude/UAE.md) — wrong ref?"
 }
 
 if resolve_local_source; then

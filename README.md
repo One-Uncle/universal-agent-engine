@@ -13,19 +13,19 @@ What you get:
 
 ## Quick start
 
-1. **Install the engine into your codebase.** From the codebase root:
+1. **Install the engine into your codebase.** The repo is private, so the one-liners authenticate through the [GitHub CLI](https://cli.github.com/) — install `gh` and run `gh auth login` once (with an account that can read `One-Uncle/universal-agent-engine`), then from the codebase root:
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.sh | sh
+   gh api repos/One-Uncle/universal-agent-engine/contents/install.sh -H "Accept: application/vnd.github.raw" | sh
    ```
 
    Windows PowerShell:
 
    ```powershell
-   irm https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.ps1 -OutFile uae-install.ps1; powershell -ExecutionPolicy Bypass -File uae-install.ps1; Remove-Item uae-install.ps1
+   gh api repos/One-Uncle/universal-agent-engine/contents/install.ps1 -H "Accept: application/vnd.github.raw" | Set-Content -Encoding UTF8 uae-install.ps1; powershell -ExecutionPolicy Bypass -File uae-install.ps1; Remove-Item uae-install.ps1
    ```
 
-   Or from a clone of this repo: `sh install.sh /path/to/your/project` / `install.ps1 -TargetDir <path>`. (Cloning this repo standalone and working inside it also works — it already ships in installed form.)
+   Both fetch the installer, which then downloads the rest of the engine through the same `gh` token. Or skip the one-liner entirely and install from a clone: `git clone` this repo, then `sh install.sh /path/to/your/project` / `install.ps1 -TargetDir <path>`. (Cloning this repo standalone and working inside it also works — it already ships in installed form. If the repo ever goes public, plain `curl -fsSL https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.sh | sh` works too — the installers fall back to anonymous download automatically.)
 
    The installer never clobbers existing work: engine files are skip-if-exists (`--force` / `-Force` to overwrite), an existing `.claude/settings.json` is merged — your keys, values, and hooks are preserved, missing `UAE_*` keys are added as `UNSET`, and the rtk hook entry is appended — an existing `CLAUDE.md` just gains an appended `@.claude/UAE.md` import, and `.gitattributes` gains `*.sh text eol=lf`. Idempotent: rerun anytime; `--dry-run` / `-DryRun` prints the plan without writing. If no `python3`/`python` is on PATH for the JSON merge, the engine settings land in `.claude/settings.uae.json` with a manual-merge note instead.
 2. **Drop your docs.** Put project spec, scope, design-system, and brand-voice docs into `project-details/`. Any format. Nothing to reformat.

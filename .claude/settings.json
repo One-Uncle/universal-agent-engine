@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude || exit 0"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "UAE_PROJECT_NAME": "UNSET",
+    "UAE_PROJECT_TYPE": "UNSET",
+    "UAE_STACK": "UNSET",
+    "UAE_HOSTING": "UNSET",
+    "UAE_SOURCE_OF_TRUTH": "UNSET",
+    "UAE_EXCLUSIVE_RESOURCES": "UNSET",
+    "UAE_COMPONENTS_PATH": "UNSET",
+    "UAE_CONTENT_PATH": "UNSET",
+    "UAE_TOKENS_PATH": "UNSET",
+    "UAE_AUDITS_PATH": "UNSET",
+    "UAE_DESIGN_SYSTEM": "UNSET",
+    "UAE_BRAND_VOICE": "UNSET",
+    "UAE_DEPLOY_MODEL": "UNSET"
+  }
+}

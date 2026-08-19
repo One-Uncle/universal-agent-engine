@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build / tooling output
+dist/
+build/
+out/
+.cache/
+*.tsbuildinfo
+
+# Secrets and environment
+.env
+.env.*
+!.env.example
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local scratch — drafts that should not become source of truth
+scratch/
+*.local.*
+
+# Large binary intermediates (keep exported/optimized versions only)
+*.sketch
+*.fig
+*.psd
+*.ai
+*.mp4
+*.mov
+assets/**/_raw/
+
+# Claude Code local overrides only.
+# .claude/settings.json IS tracked — it holds the UAE_* project env config
+# and the shared agent/hook setup. Never ignore it.
+.claude/settings.local.json

@@ -1,0 +1,47 @@
+# Universal Agent Engine
+
+A portable three-layer agent orchestration engine. Drop it onto any project — marketing site, web app, API, library — and every substantive task gets decomposed into bounded work items, run by a parallel swarm, verified, and reported back compressed.
+
+Nothing here is project-specific. The engine reads what it needs to know about your project from environment variables in [.claude/settings.json](.claude/settings.json), filled once by the `init-project` intake from docs you drop into [project-details/](project-details/).
+
+What you get:
+
+- **Orchestration** — Fable-tier orchestrator, Opus-tier `swarm-worker` swarm, Sonnet-tier `chat-responder` relay. Protocol, dispatch contract, and collision doctrine in [CLAUDE.md](CLAUDE.md).
+- **Token efficiency** — two default-on compression layers (caveman model output + `rtk` shell-output proxy). Details: [docs/token-efficiency.md](docs/token-efficiency.md).
+- **Playbook** — worked task decompositions and mechanical verification examples: [docs/orchestration-playbook.md](docs/orchestration-playbook.md).
+
+## Quick start
+
+1. **Get the engine in place.** Copy or clone this repo into your project (agent config, docs, and `project-details/` sit alongside your code), or clone it standalone and point it at the work.
+2. **Drop your docs.** Put project spec, scope, design-system, and brand-voice docs into `project-details/`. Any format. Nothing to reformat.
+3. **Initialize.** Open Claude Code in the repo and say **"initialize project"**. That runs the `init-project` skill: it reads every file in `project-details/`, extracts project facts, and writes them into the `env` block of `.claude/settings.json`.
+4. **Review.** Check the filled values in `.claude/settings.json`. `init-project` reports which keys it filled and which are still `UNSET`; fill the leftovers by hand or add the missing doc and re-run.
+5. **Work.** Give it a task. Every substantive task runs the swarm — decompose, parallel dispatch, mechanical verify, compressed report.
+
+## Human setup
+
+- Run the Claude Code session on **Fable 5** (model picker / `/model`). The session is chat + orchestrator in one loop. (Or delegate to the `orchestrator` subagent, whose model is pinned regardless of session model.)
+- Swarm workers (**Opus** tier) and the chat relay (**Sonnet** tier) are pinned in [.claude/agents/](.claude/agents/) and need no setup.
+- Install [rtk](https://github.com/rtk-ai/rtk) (shell-output compression proxy), run `rtk init -g`, restart Claude Code, then approve this repo's project-level hook prompt on first run. Optional — the hook ends in `|| exit 0`, so a machine without the binary degrades gracefully to uncompressed output. Without it the agents still work, they just burn 60–90% more tokens on command output.
+
+## Project variables
+
+Single source of truth: the `env` block in `.claude/settings.json`. All default to `UNSET`. Keep this table in sync with [CLAUDE.md](CLAUDE.md).
+
+| Key | Meaning |
+| --- | --- |
+| `UAE_PROJECT_NAME` | Human name of the project this engine drives. |
+| `UAE_PROJECT_TYPE` | Kind of thing being built (e.g. `marketing-site`, `web-app`, `api`, `library`). |
+| `UAE_STACK` | Languages, frameworks, and build tooling in use. |
+| `UAE_HOSTING` | Where it runs (e.g. `cloud-platform`, `self-hosted`, `static`). |
+| `UAE_SOURCE_OF_TRUTH` | Where design/layout authority lives (e.g. an external design canvas, or `this repo`). |
+| `UAE_EXCLUSIVE_RESOURCES` | Comma list of single-tenant resources; max one worker per wave may touch each (e.g. `design canvas, shared browser session`). |
+| `UAE_COMPONENTS_PATH` | Repo path holding UI components / modules. |
+| `UAE_CONTENT_PATH` | Repo path holding copy and content source of truth. |
+| `UAE_TOKENS_PATH` | Repo path holding design tokens / theme values. |
+| `UAE_AUDITS_PATH` | Repo path where audit and review reports are written. |
+| `UAE_DESIGN_SYSTEM` | Pointer to the design-system file or doc. |
+| `UAE_BRAND_VOICE` | Pointer to the voice / style guide. |
+| `UAE_DEPLOY_MODEL` | What merge and publish mean here (branch ↔ environment mapping, who presses publish). |
+
+Resolution rule: read the value → if `UNSET` and `project-details/` has files, run `init-project` → if `UNSET` and `project-details/` is empty, ask. Agents never guess a project fact.

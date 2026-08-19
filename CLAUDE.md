@@ -30,6 +30,11 @@ User Chat + Orchestrator (Fable 5, one loop) → Agent Swarm (Opus 5) → chat-r
 - **Agent Swarm — Opus tier**: `swarm-worker` subagents (`.claude/agents/swarm-worker.md`, `model: opus`). Spawn several in parallel — one bounded work item each.
 - **Chat relay — Sonnet tier**: `chat-responder` subagent (`.claude/agents/chat-responder.md`, `model: sonnet`) turns aggregated swarm output into the user-facing report.
 
+Utility agents outside the swarm cycle, dispatched directly when their trigger fires:
+
+- **`skill-manager`** (`.claude/agents/skill-manager.md`, `model: opus`) — finds, installs, or authors Claude Code skills. Resolution order: installed → marketplace/public repos → author new. Security-reviews every third-party skill before install.
+- **`agent-builder`** (`.claude/agents/agent-builder.md`, `model: opus`) — writes and updates `.claude/agents/*.md` definitions to house rules (tier aliases, least-privilege tools, recursion guard, mandatory Project scope + Token efficiency sections).
+
 `model: opus` / `model: sonnet` are tier aliases that resolve to the current generation (Opus 5 / Sonnet 5 today). The architecture pins tiers, not generations.
 
 ## Protocol

@@ -9,6 +9,7 @@ What you get:
 - **Orchestration** — Fable-tier orchestrator, Opus-tier `swarm-worker` swarm, Sonnet-tier `chat-responder` relay. Protocol, dispatch contract, and collision doctrine in [CLAUDE.md](CLAUDE.md).
 - **Token efficiency** — two default-on compression layers (caveman model output + `rtk` shell-output proxy). Details: [docs/token-efficiency.md](docs/token-efficiency.md).
 - **Playbook** — worked task decompositions and mechanical verification examples: [docs/orchestration-playbook.md](docs/orchestration-playbook.md).
+- **Self-extension** — the `skill-manager` agent finds, installs, or authors skills (with a security review gate on anything third-party); the `agent-builder` agent creates and updates agent definitions to house rules.
 
 ## Quick start
 

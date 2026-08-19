@@ -13,7 +13,21 @@ What you get:
 
 ## Quick start
 
-1. **Get the engine in place.** Copy or clone this repo into your project (agent config, docs, and `project-details/` sit alongside your code), or clone it standalone and point it at the work.
+1. **Install the engine into your codebase.** From the codebase root:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.sh | sh
+   ```
+
+   Windows PowerShell:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/One-Uncle/universal-agent-engine/main/install.ps1 -OutFile uae-install.ps1; powershell -ExecutionPolicy Bypass -File uae-install.ps1; Remove-Item uae-install.ps1
+   ```
+
+   Or from a clone of this repo: `sh install.sh /path/to/your/project` / `install.ps1 -TargetDir <path>`. (Cloning this repo standalone and working inside it also works — it already ships in installed form.)
+
+   The installer never clobbers existing work: engine files are skip-if-exists (`--force` / `-Force` to overwrite), an existing `.claude/settings.json` is merged — your keys, values, and hooks are preserved, missing `UAE_*` keys are added as `UNSET`, and the rtk hook entry is appended — an existing `CLAUDE.md` just gains an appended `@.claude/UAE.md` import, and `.gitattributes` gains `*.sh text eol=lf`. Idempotent: rerun anytime; `--dry-run` / `-DryRun` prints the plan without writing. If no `python3`/`python` is on PATH for the JSON merge, the engine settings land in `.claude/settings.uae.json` with a manual-merge note instead.
 2. **Drop your docs.** Put project spec, scope, design-system, and brand-voice docs into `project-details/`. Any format. Nothing to reformat.
 3. **Initialize.** Open Claude Code in the repo and say **"initialize project"**. That runs the `init-project` skill: it reads every file in `project-details/`, extracts project facts, and writes them into the `env` block of `.claude/settings.json`.
 4. **Review.** Check the filled values in `.claude/settings.json`. `init-project` reports which keys it filled and which are still `UNSET`; fill the leftovers by hand or add the missing doc and re-run.

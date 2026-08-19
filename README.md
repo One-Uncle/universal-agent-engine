@@ -22,7 +22,17 @@ What you get:
 
 - Run the Claude Code session on **Fable 5** (model picker / `/model`). The session is chat + orchestrator in one loop. (Or delegate to the `orchestrator` subagent, whose model is pinned regardless of session model.)
 - Swarm workers (**Opus** tier) and the chat relay (**Sonnet** tier) are pinned in [.claude/agents/](.claude/agents/) and need no setup.
-- Install [rtk](https://github.com/rtk-ai/rtk) (shell-output compression proxy), run `rtk init -g`, restart Claude Code, then approve this repo's project-level hook prompt on first run. Optional — the hook ends in `|| exit 0`, so a machine without the binary degrades gracefully to uncompressed output. Without it the agents still work, they just burn 60–90% more tokens on command output.
+- Install [rtk](https://github.com/rtk-ai/rtk) (shell-output compression proxy) with the bundled installer — it detects your OS and CPU architecture, runs the matching official install method (Homebrew / prebuilt release binary / official install script / cargo), and registers the global hook (`rtk init -g --auto-patch`):
+
+  ```bash
+  sh scripts/install-rtk.sh          # macOS / Linux / Git Bash
+  ```
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts\install-rtk.ps1   # Windows
+  ```
+
+  Both are idempotent and take a `--dry-run` / `-DryRun` flag that prints the plan without changing anything. After installing: restart Claude Code, then approve this repo's project-level hook prompt on first run. Optional — the hook ends in `|| exit 0`, so a machine without the binary degrades gracefully to uncompressed output. Without it the agents still work, they just burn 60–90% more tokens on command output.
 
 ## Project variables
 

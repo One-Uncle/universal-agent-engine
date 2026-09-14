@@ -1,7 +1,7 @@
 ---
 name: swarm-worker
 description: Opus 5 swarm worker. Use for scoped subtasks the orchestrator dispatches as part of a parallel swarm cycle — research, implementation, auditing, verification. Spawn several in parallel (one message, multiple Agent calls) with one bounded work item each. Not for single-agent delegations where a specialized agent exists.
-model: opus
+model: sonnet
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch
 ---
 

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "rtk hook claude || exit 0"
+            "command": "rtk hook claude"
           }
         ]
       }
